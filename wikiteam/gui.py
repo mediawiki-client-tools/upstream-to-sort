@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2011-2012 WikiTeam
+# Copyright (C) 2011-2023 WikiTeam developers and MediaWiki Client Tools
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +21,7 @@ TODO:
 
 * advanced: batch downloads, upload to Internet Archive or anywhere
 """
+
 
 import os
 import platform
@@ -54,25 +55,27 @@ from tkinter import (
 from wikiteam3.dumpgenerator.api.api import checkAPI
 from wikiteam3.dumpgenerator.api.index_check import checkIndex
 
+# See https://www.mediawiki.org/wiki/Hosting_services
 wikifarms = {
-    "gentoo_wikicom": "Gentoo Wiki",
-    "opensuseorg": "OpenSuSE",
-    "referatacom": "Referata",
-    "shoutwikicom": "ShoutWiki",
-    "Unknown": "Unknown",
-    "wikanda": "Wikanda",
-    "wikifur": "WikiFur",
-    "wikimedia": "Wikimedia",
-    "wikitravelorg": "WikiTravel",
-    "wikkii": "Wikkii",
+    "fandom": "Fandom",
+    "miraheze": "Miraheze",
+    "mywikis": "MyWikis",
+    "neoseeker": "Neoseeker",
+    "prowiki": "ProWiki",
+    "shoutwiki": "ShoutWiki",
+    "telepedia wiki": "Telepedia Wiki",
+    "webmo": "WebMo",
+    "wiki.gg": "wiki.gg",
+    "wiki-site": "Wiki-Site",
+    "wikiforge": "WikiForge",
+    "wikitide": "WikiTide",
 }
 
-NAME = "WikiTeam tools"
+NAME = "MediaWiki Dump Generator"
 VERSION = "0.1"
-HOMEPAGE = "https://code.google.com/p/wikiteam/"
+HOMEPAGE = "https://github.com/mediawiki-client-tools/mediawiki-dump-generator"
 LINUX = platform.system().lower() == "linux"
-PATH = os.path.dirname(__file__)
-if PATH:
+if PATH := os.path.dirname(__file__):
     os.chdir(PATH)
 
 
@@ -177,16 +180,18 @@ class App:
             self.frame2,
             self.optionmenu21var,
             self.optionmenu21var.get(),
-            "Gentoo Wiki",
-            "OpenSuSE",
-            "Referata",
+            "Fandom",
+            "Miraheze",
+            "MyWikis",
+            "Neoseeker",
+            "ProWiki",
             "ShoutWiki",
-            "Unknown",
-            "Wikanda",
-            "WikiFur",
-            "Wikimedia",
-            "WikiTravel",
-            "Wikkii",
+            "Telepedia Wiki",
+            "WebMo",
+            "wiki.gg",
+            "Wiki-Site",
+            "WikiForge",
+            "WikiTide",
         )
         self.optionmenu21.grid(row=1, column=1)
 
@@ -215,6 +220,18 @@ class App:
             self.optionmenu23var.get(),
             "2011",
             "2012",
+            "2013",
+            "2014",
+            "2015",
+            "2016",
+            "2017",
+            "2018",
+            "2019",
+            "2020",
+            "2021",
+            "2022",
+            "2023",
+            "2024",
         )
         self.optionmenu23.grid(row=1, column=5)
 
@@ -228,7 +245,6 @@ class App:
             self.optionmenu24var.get(),
             "Google Code",
             "Internet Archive",
-            "ScottDB",
         )
         self.optionmenu24.grid(row=1, column=7)
 
@@ -367,14 +383,12 @@ class App:
                 total += float(size.split(" ")[0]) * 1024 * 1024
             elif size.endswith("TB"):
                 total += float(size.split(" ")[0]) * 1024 * 1024 * 1024
-            elif not size or size.lower() == "unknown":
-                pass
-            else:
+            elif size and size.lower() != "unknown":
                 total += size
         return total / 1024  # MB
 
     def run(self):
-        for i in range(10):
+        for _ in range(10):
             time.sleep(0.1)
             self.value += 10
 
@@ -416,13 +430,11 @@ class App:
             percent = downloaded / (total_mb / 100.0)
             if not random.randint(0, 10):
                 msg = "{:.1f} MB of {:.1f} MB downloaded ({:.1f}%)".format(
-                    downloaded,
-                    total_mb,
-                    percent if percent <= 100 else 100,
+                    downloaded, total_mb, min(percent, 100)
                 )
                 self.msg(msg, level="ok")
-            # sys.stdout.write("%.1f MB of %.1f MB downloaded (%.2f%%)" %(downloaded, total_mb, percent))
-            # sys.stdout.flush()
+                # sys.stdout.write("%.1f MB of %.1f MB downloaded (%.2f%%)" %(downloaded, total_mb, percent))
+                # sys.stdout.flush()
         except:
             pass
 
@@ -432,15 +444,14 @@ class App:
             return
         else:
             self.block = True
-        items = self.tree.selection()
-        if items:
+        if items := self.tree.selection():
             if not os.path.exists(self.downloadpath):
                 os.makedirs(self.downloadpath)
             c = 0
             d = 0
             for item in items:
                 filepath = (
-                    self.downloadpath + "/" + self.dumps[int(item)][0]
+                    f"{self.downloadpath}/{self.dumps[int(item)][0]}"
                     if self.downloadpath
                     else self.dumps[int(item)][0]
                 )
@@ -462,10 +473,7 @@ class App:
                         filepath,
                         reporthook=self.downloadProgress,
                     )
-                    msg = "{} size is {} bytes large. Download successful!".format(
-                        self.dumps[int(item)][0],
-                        os.path.getsize(filepath),
-                    )
+                    msg = f"{self.dumps[int(item)][0]} size is {os.path.getsize(filepath)} bytes large. Download successful!"
                     self.msg(msg=msg, level="ok")
                     c += 1
                 self.dumps[int(item)] = self.dumps[int(item)][:6] + ["True"]
@@ -503,8 +511,9 @@ class App:
             self.tree.delete(str(i))
 
     def showAvailableDumps(self):
-        c = 0
-        for filename, wikifarm, size, date, mirror, url, downloaded in self.dumps:
+        for c, (filename, wikifarm, size, date, mirror, url, downloaded) in enumerate(
+            self.dumps
+        ):
             self.tree.insert(
                 "",
                 "end",
@@ -520,7 +529,6 @@ class App:
                 ),
                 tags=("downloaded" if downloaded else "nodownloaded",),
             )
-            c += 1
 
     def filterAvailableDumps(self):
         self.clearAvailableDumps()
@@ -541,22 +549,13 @@ class App:
                 else:
                     nodownloadedsizes.append(self.dumps[i][2])
             elif (
-                (
-                    self.optionmenu21var.get() != "all"
-                    and not self.optionmenu21var.get() == self.dumps[i][1]
-                )
-                or (
-                    self.optionmenu22var.get() != "all"
-                    and not self.optionmenu22var.get() in self.dumps[i][2]
-                )
-                or (
-                    self.optionmenu23var.get() != "all"
-                    and not self.optionmenu23var.get() in self.dumps[i][3]
-                )
-                or (
-                    self.optionmenu24var.get() != "all"
-                    and not self.optionmenu24var.get() in self.dumps[i][4]
-                )
+                self.optionmenu21var.get() not in ["all", self.dumps[i][1]]
+                or self.optionmenu22var.get() != "all"
+                and self.optionmenu22var.get() not in self.dumps[i][2]
+                or self.optionmenu23var.get() != "all"
+                and self.optionmenu23var.get() not in self.dumps[i][3]
+                or self.optionmenu24var.get() != "all"
+                and self.optionmenu24var.get() not in self.dumps[i][4]
             ):
                 self.tree.detach(str(i))  # hide this item
                 sizes.append(self.dumps[i][2])
@@ -580,7 +579,7 @@ class App:
         # improve, size check or md5sum?
         if filename:
             filepath = (
-                self.downloadpath + "/" + filename if self.downloadpath else filename
+                f"{self.downloadpath}/{filename}" if self.downloadpath else filename
             )
             if os.path.exists(filepath):
                 return True
@@ -620,17 +619,12 @@ class App:
                 iaregexp,
             ],
             [
-                "ScottDB",
-                "http://mirrors.sdboyd56.com/WikiTeam/",
-                r'<a href="(?P<filename>[^>]+\.7z)">(?P<size>[\d\.]+ (?:KB|MB|GB|TB))</a>',
-            ],
-            [
                 "Wikimedia",
                 "http://dumps.wikimedia.org/backup-index.html",
                 r'(?P<size>)<a href="(?P<filename>[^>]+)">[^>]+</a>: <span class=\'done\'>Dump complete</span></li>',
             ],
         ]
-        wikifarms_r = re.compile(r"(%s)" % ("|".join(wikifarms.keys())))
+        wikifarms_r = re.compile(f'({"|".join(wikifarms.keys())})')
         c = 0
         for mirror, url, regexp in self.urls:
             print("Loading data from", mirror, url)
@@ -640,9 +634,7 @@ class App:
             for i in m:
                 filename = i.group("filename")
                 if mirror == "Wikimedia":
-                    filename = "%s-pages-meta-history.xml.7z" % (
-                        re.sub("/", "-", filename)
-                    )
+                    filename = f'{re.sub("/", "-", filename)}-pages-meta-history.xml.7z'
                 wikifarm = "Unknown"
                 if re.search(wikifarms_r, filename):
                     wikifarm = re.findall(wikifarms_r, filename)[0]
@@ -658,13 +650,11 @@ class App:
                     date = re.findall(r"\-(\d{4}\-\d{2}\-\d{2})[\.-]", filename)[0]
                 downloadurl = ""
                 if mirror == "Google Code":
-                    downloadurl = "https://wikiteam.googlecode.com/files/" + filename
+                    downloadurl = f"https://wikiteam.googlecode.com/files/{filename}"
                 elif mirror == "Internet Archive":
                     downloadurl = (
                         re.sub(r"/details/", r"/download/", url) + "/" + filename
                     )
-                elif mirror == "ScottDB":
-                    downloadurl = url + "/" + filename
                 elif mirror == "Wikimedia":
                     downloadurl = (
                         "http://dumps.wikimedia.org/"

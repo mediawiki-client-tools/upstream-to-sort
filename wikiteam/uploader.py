@@ -28,7 +28,6 @@ from pathlib import Path
 
 import requests
 from internetarchive import get_item
-
 from wikiteam3.dumpgenerator.config import Config
 from wikiteam3.utils import domain2prefix, getUserAgent
 

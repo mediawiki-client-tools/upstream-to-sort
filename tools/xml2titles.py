@@ -164,9 +164,11 @@ class XMLBaseHandler(xml.sax.handler.ContentHandler):
         if self.inId:
             self.cjoin("id", content) if "id" not in not_parse_tags else None
         if self.inRevision:
-            self.cjoin(
-                "revision", content
-            ) if "revision" not in not_parse_tags else None
+            (
+                self.cjoin("revision", content)
+                if "revision" not in not_parse_tags
+                else None
+            )
 
     def endDocument(self):
         if self.depth != 0:
@@ -207,9 +209,11 @@ class TitlesHandler(XMLBaseHandler):
         if name == "page":
             if self.page["title"] is not None:
                 if self.page["title"] in self.set_titles:
-                    print(
-                        "Duplicate title found: %s" % self.page["title"]
-                    ) if not self.silent else None
+                    (
+                        print("Duplicate title found: %s" % self.page["title"])
+                        if not self.silent
+                        else None
+                    )
                 else:
                     self.set_titles.add(self.page["title"])
                     self.list_titles.append(self.page["title"])  # unique

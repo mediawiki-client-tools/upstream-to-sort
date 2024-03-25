@@ -8,7 +8,6 @@ from pywikibot import family
 # The MediaWiki family
 # user-config.py: usernames['wikiapiary']['wikiapiary'] = 'User name'
 class Family(family.WikimediaFamily):
-
     """Family module for WikiApiary wiki."""
 
     def __init__(self):
